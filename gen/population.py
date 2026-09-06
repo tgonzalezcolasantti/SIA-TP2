@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from math import ceil
 import random
-from typing import Any, Generic, List, Self, Tuple, TypeVar
+from typing import Any, Generic, List, Self, Sequence, Tuple, TypeVar
 
 class MutationType(Enum):
     SINGLEGENE = "Single Gene"
@@ -12,10 +12,15 @@ class MutationType(Enum):
     MULTI_COMPLETE = "Multigene complete"
 
 IndividualT = TypeVar("IndividualT", bound="Individual")
-TargetT = TypeVar("TargetT", bound="Any")
+TargetT = TypeVar("TargetT", bound="Target")
 
-class Population():
-    def __init__(self: Self, individuals: List[Individual]):
+class Target(ABC, Generic[IndividualT]):
+    @abstractmethod
+    def total_score(self: Self, population: Sequence[IndividualT]) -> float:
+        "Returns the global score for this generation"
+
+class Population(Generic[IndividualT]):
+    def __init__(self: Self, individuals: List[IndividualT]):
         self.individuals = individuals
         self.total_fitness = sum(p.fitness for p in self.individuals)
 

@@ -1,14 +1,14 @@
 from abc import ABC, abstractmethod
 import io
 import random
-from typing import List, Self, Tuple, override
+from typing import List, Self, Sequence, Tuple, override
 
 from PIL import Image as pimg
 import numpy as np
 from numpy import ndarray
 from cairosvg import svg2png
 
-from gen.population import Individual
+from gen.population import Individual, Target
 
 class Shape(Individual, ABC):
     @abstractmethod
@@ -105,11 +105,11 @@ class Triangle(Shape, Individual):
         return self.target.image_similarity(newimage)
 
 
-class Image():
+class Image(Target):
     def __init__(self: Self, image: ndarray):
         self.image = image
 
-    def shapes_to_image(self: Self, shapes: List[Shape], with_background: bool = True) -> ndarray:
+    def shapes_to_image(self: Self, shapes: Sequence[Shape], with_background: bool = True) -> ndarray:
         x = self.image.shape[0]
         y = self.image.shape[1]
         svg = f'<svg height="{y}" width="{x}" viewBox="0 0 {x} {y}" xmlns="http://www.w3.org/2000/svg">'
@@ -139,6 +139,7 @@ class Image():
                     global_score += pixel_score
         return global_score / (self.image.shape[0] * self.image.shape[1])
 
-    def shapes_score(self: Self, shapes: List[Shape]) -> float:
-        newimage = self.shapes_to_image(shapes)
+    @override
+    def total_score(self: Self, population: Sequence[Shape]) -> float:
+        newimage = self.shapes_to_image(population)
         return self.image_similarity(newimage)
