@@ -1,8 +1,10 @@
+"Different selection methods to iterate across generations"
+
 from abc import ABC, abstractmethod
 from math import ceil, exp
 from statistics import mean
 import random
-from typing import List, Optional, Self, Tuple, TypeVar, override
+from typing import List, Optional, Self, Tuple, override
 
 from gen.genetic import Population
 from gen.population import Individual

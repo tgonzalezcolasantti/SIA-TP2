@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from math import ceil
 from typing import Any, Generic, List, Self, Tuple, TypeVar
 
 class Population():
@@ -25,6 +26,7 @@ GenotypeT = TypeVar("GenotypeT", bound="Any")
 class Individual(ABC, Generic[GenotypeT]):
     genotype: GenotypeT
     fitness: float
+    genome_length: int
     @abstractmethod
     @classmethod
     def from_scratch(cls: type[Individual]) -> Individual:
@@ -32,5 +34,22 @@ class Individual(ABC, Generic[GenotypeT]):
 
 
     @abstractmethod
-    def cross(self: Self):
+    def cross_1p(self: Self, other: Individual, position: int):
+        #No need to raise index errors, indexing the array wrong will do it for us
+        #Does that mean we can have negative indexes? Yes, it does. Doesn't matter though
         pass
+    @abstractmethod
+    def cross_2p(self: Self, other: Individual, p1: int, p2):
+        if p1 >= p2:
+            raise AttributeError("P1 must be smaller than P2")
+
+    @abstractmethod
+    def cross_ring(self: Self, other: Individual, position: int, length):
+        if length > ceil(self.genome_length/2):
+            raise AttributeError("Cannot swap more than half the genome")
+
+    @abstractmethod
+    def cross_uniform(self: Self, other: Individual, p: float):
+        pass
+
+    
