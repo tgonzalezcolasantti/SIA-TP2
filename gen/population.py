@@ -5,12 +5,6 @@ from math import ceil
 import random
 from typing import Any, Generic, List, Self, Tuple, TypeVar
 
-class CrossType(Enum):
-    ONEPOINT = "One Point"
-    TWOPOINT = "Two Point"
-    RING = "Ring"
-    UNIFORM = "Uniform"
-
 class MutationType(Enum):
     SINGLEGENE = "Single Gene"
     MULTI_LIMITED = "Multigene limited"
