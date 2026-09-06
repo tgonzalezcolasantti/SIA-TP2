@@ -44,8 +44,8 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
     fitness: float
     genome_length: int
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def from_scratch(cls: type[Individual], target: TargetT) -> Individual:
         "Creates a new individual with random genes"
 
@@ -84,7 +84,6 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
             if random.random() >= p:
                 self.swap_gene(other, i)
 
-    @abstractmethod
     def mutate_single(self: Self, p: float):
         "Selects a random gene and mutatates it according to probability p"
         if p < 0 or p > 1:
@@ -92,7 +91,6 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
         if random.random() >= p:
             self.mutate_gene(random.randrange(0, self.genome_length))
 
-    @abstractmethod
     def mutate_multi_lim(self: Self, amount: int, p: float):
         "Selects up to amount random genes and mutatates them according to probability p"
         if p < 0 or p > 1:
@@ -104,7 +102,6 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
             if random.random() >= p:
                 self.mutate_gene(i)
 
-    @abstractmethod
     def mutate_multi_uniform(self: Self, p: float):
         "Every gene can be mutated individually according to probability p"
         if p < 0 or p > 1:
@@ -113,7 +110,6 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
             if random.random() >= p:
                 self.mutate_gene(i)
 
-    @abstractmethod
     def mutate_complete(self: Self, p: float):
         "The entire genome will mutate according to probability p"
         if p < 0 or p > 1:
