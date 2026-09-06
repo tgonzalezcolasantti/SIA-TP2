@@ -6,8 +6,7 @@ from statistics import mean
 import random
 from typing import List, Optional, Self, Tuple, override
 
-from gen.genetic import Population
-from gen.population import Individual
+from gen.population import Individual, Population
 
 class SelectionMethod(ABC):
     "Base class for genetic selection methods"
