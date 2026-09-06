@@ -55,7 +55,7 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
         "Selects a random gene and mutatates it according to probability p"
         if p < 0 or p > 1:
             raise AttributeError("Probability out of range")
-        if random.random() >= p:
+        if random.random() <= p:
             self.mutate_gene(random.randrange(0, self.genome_length))
 
     def mutate_multi_lim(self: Self, amount: int, p: float):
@@ -66,7 +66,7 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
             raise AttributeError("Amount of genes out of range")
         indexes = [random.randrange(0, self.genome_length) for _ in range(random.randrange(1, amount))]
         for i in indexes:
-            if random.random() >= p:
+            if random.random() <= p:
                 self.mutate_gene(i)
 
     def mutate_multi_uniform(self: Self, p: float):
@@ -74,13 +74,13 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
         if p < 0 or p > 1:
             raise AttributeError("Probability out of range")
         for i in range(self.genome_length):
-            if random.random() >= p:
+            if random.random() <= p:
                 self.mutate_gene(i)
 
     def mutate_complete(self: Self, p: float):
         "The entire genome will mutate according to probability p"
         if p < 0 or p > 1:
             raise AttributeError("Probability out of range")
-        if random.random() >= p:
+        if random.random() <= p:
             for i in range(self.genome_length):
                 self.mutate_gene(i)

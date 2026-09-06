@@ -53,4 +53,4 @@ class UniformCross(CrossMethod):
     @staticmethod
     def get_locuses(genome_length: int) -> List[int]:
         probability = random.random()
-        return [i for i in range(genome_length) if random.random() >= probability]
+        return [i for i in range(genome_length) if random.random() <= probability]
