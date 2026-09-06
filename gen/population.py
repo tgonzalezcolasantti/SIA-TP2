@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from math import ceil
 import random
-from typing import Generic, List, Self, Tuple, TypeVar
+from typing import Any, Generic, List, Self, Tuple, TypeVar
 
 class CrossType(Enum):
     ONEPOINT = "One Point"
@@ -18,6 +18,7 @@ class MutationType(Enum):
     MULTI_COMPLETE = "Multigene complete"
 
 IndividualT = TypeVar("IndividualT", bound="Individual")
+TargetT = TypeVar("TargetT", bound="Any")
 
 class Population():
     def __init__(self: Self, individuals: List[Individual]):
@@ -39,13 +40,13 @@ class Population():
         return result
 
 
-class Individual(ABC, Generic[IndividualT]):
+class Individual(ABC, Generic[IndividualT, TargetT]):
     fitness: float
     genome_length: int
 
     @abstractmethod
     @classmethod
-    def from_scratch(cls: type[Individual]) -> Individual:
+    def from_scratch(cls: type[Individual], target: TargetT) -> Individual:
         "Creates a new individual with random genes"
 
     @abstractmethod
