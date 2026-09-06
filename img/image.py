@@ -48,31 +48,32 @@ class Triangle(Shape, Individual):
             points.append(cls.random_point())
         return cls(target, points, cls.random_color())
 
-    def swap_gene(self: Self, other: Triangle, position: int) -> None:
+    @override
+    def swap_genes(self: Self, other: Triangle, locuses: List[int]) -> Tuple[Triangle, Triangle]:
         # Not the best, but it should do the trick
-        if position < 6:
-            temp = self.points[int(position / 2)]
-            if not position % 2:
-                self.points[int(position/2)] = (other.points[int(position/2)][0], temp[1])
-                other.points[int(position/2)] = (temp[0], other.points[int(position/2)][1])
-            else:
-                self.points[int(position/2)] = (temp[0], other.points[int(position/2)][1])
-                other.points[int(position/2)] = (other.points[int(position/2)][0], temp[1])
-        else:
-            temp = self.color
-            position = (position-6) % 4
-            if position == 0:
-                self.color = (other.color[0], temp[1], temp[2], temp[3])
-                other.color = (temp[0], other.color[1], other.color[2], other.color[3])
-            elif position == 1:
-                self.color = (temp[0], other.color[1], temp[2], temp[3])
-                other.color = (other.color[0], temp[1], other.color[2], other.color[3])
-            elif position == 2:
-                self.color = (temp[0], temp[1], other.color[2], temp[3])
-                other.color = (other.color[0], other.color[1], temp[2], other.color[3])
-            elif position == 3:
-                self.color = (temp[0], temp[1], temp[2], other.color[3])
-                other.color = (other.color[0], other.color[1], other.color[2], temp[3])
+        p1_points: List[Tuple[float, float]] = []
+        p2_points: List[Tuple[float, float]] = []
+        p1_color: Tuple[int, int, int, int]
+        p2_color: Tuple[int, int, int, int]
+        p1_points.append((other.points[0][0] if 0 in locuses else self.points[0][0], other.points[0][1] if 1 in locuses else self.points[0][1]))
+        p1_points.append((other.points[1][0] if 2 in locuses else self.points[1][0], other.points[1][1] if 3 in locuses else self.points[1][1]))
+        p1_points.append((other.points[2][0] if 4 in locuses else self.points[2][0], other.points[2][1] if 5 in locuses else self.points[2][1]))
+        p2_points.append((self.points[0][0] if 0 in locuses else other.points[0][0], self.points[0][1] if 1 in locuses else other.points[0][1]))
+        p2_points.append((self.points[1][0] if 2 in locuses else other.points[1][0], self.points[1][1] if 3 in locuses else other.points[1][1]))
+        p2_points.append((self.points[2][0] if 4 in locuses else other.points[2][0], self.points[2][1] if 5 in locuses else other.points[2][1]))
+        p1_color = (
+            other.color[0] if 6 in locuses else self.color[0],
+            other.color[1] if 7 in locuses else self.color[1],
+            other.color[2] if 8 in locuses else self.color[2],
+            other.color[3] if 9 in locuses else self.color[3],
+        )
+        p2_color = (
+            self.color[0] if 6 in locuses else other.color[0],
+            self.color[1] if 7 in locuses else other.color[1],
+            self.color[2] if 8 in locuses else other.color[2],
+            self.color[3] if 9 in locuses else other.color[3],
+        )
+        return Triangle(self.target, p1_points, p1_color), Triangle(self.target, p2_points, p2_color)
 
     def mutate_gene(self: Self, position: int) -> None:
         if position < 6:

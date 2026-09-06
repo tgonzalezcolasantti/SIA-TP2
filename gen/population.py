@@ -50,39 +50,12 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
         "Creates a new individual with random genes"
 
     @abstractmethod
-    def swap_gene(self: Self, other: IndividualT, position: int) -> None:
-        "Swaps the gene at locus position between self and other"
+    def swap_genes(self: Self, other: IndividualT, locuses: List[int]) -> Tuple[IndividualT, IndividualT]:
+        "Swaps the gene at locuses provided between self and other and returns new children with those genes"
 
     @abstractmethod
     def mutate_gene(self: Self, position: int) -> None:
         "Mutates the gene at the given position"
-
-    def cross_1p(self: Self, other: IndividualT, position: int):
-        "Swaps genes from position until end of genome"
-        #No need to raise index errors, indexing the array wrong will do it for us
-        #Does that mean we can have negative indexes? Yes, it does. Doesn't matter though
-        self.cross_2p(other, position, self.genome_length)
-
-    def cross_2p(self: Self, other: IndividualT, p1: int, p2):
-        "Swaps genes between p1 and p2"
-        if p1 >= p2:
-            raise AttributeError("P1 must be smaller than P2")
-        for i in range(p1, p2):
-            self.swap_gene(other, i % self.genome_length)
-
-    def cross_ring(self: Self, other: IndividualT, position: int, length):
-        "Swaps length genes starting at position and wraps around the end"
-        if length > ceil(self.genome_length/2):
-            raise AttributeError("Cannot swap more than half the genome")
-        self.cross_2p(other, position, position + length)
-
-    def cross_uniform(self: Self, other: IndividualT, p: float):
-        "Swaps each gene according to probability p"
-        if p < 0 or p > 1:
-            raise AttributeError("Probability out of range")
-        for i in range(self.genome_length):
-            if random.random() >= p:
-                self.swap_gene(other, i)
 
     def mutate_single(self: Self, p: float):
         "Selects a random gene and mutatates it according to probability p"
