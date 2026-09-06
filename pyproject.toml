@@ -1,0 +1,11 @@
+[project]
+name = "sia-tp2"
+version = "0.1.0"
+description = "Implementacion de algoritmos geneticos para compresion de imagenes usando formas geometricas"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.5.2",
+    "pillow>=12.3.0",
+    "rich>=15.0.0",
+]
