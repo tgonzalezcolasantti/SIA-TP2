@@ -21,10 +21,6 @@ class Target(ABC, Generic[IndividualT]):
     def total_score(self: Self, population: Sequence[IndividualT]) -> float:
         "Returns the global score for this generation"
 
-    @abstractmethod
-    def shapes_to_image(self: Self, shapes: Sequence[IndividualT], with_background: bool = True) -> ndarray:
-        "Return an image"
-
 
 class Population(Generic[IndividualT]):
     def __init__(self: Self, individuals: List[IndividualT]):
@@ -50,25 +46,20 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
     fitness: float
     genome_length: int
 
-    @classmethod
-    @abstractmethod
-    def from_scratch(cls: type[Individual], target: TargetT) -> Individual:
-        "Creates a new individual with random genes"
-
     @abstractmethod
     def swap_genes(self: Self, other: IndividualT, locuses: List[int]) -> Tuple[IndividualT, IndividualT]:
         "Swaps the gene at locuses provided between self and other and returns new children with those genes"
 
     @abstractmethod
-    def mutate_gene(self: Self, position: int) -> None:
-        "Mutates the gene at the given position"
+    def mutate_genes(self: Self, positions: List[int]) -> None:
+        "Mutates the gene at given positions"
 
     def mutate_single(self: Self, p: float):
         "Selects a random gene and mutatates it according to probability p"
         if p < 0 or p > 1:
             raise AttributeError("Probability out of range")
         if random.random() <= p:
-            self.mutate_gene(random.randrange(0, self.genome_length))
+            self.mutate_genes([random.randrange(0, self.genome_length)])
 
     def mutate_multi_lim(self: Self, amount: int, p: float):
         "Selects up to amount random genes and mutatates them according to probability p"
@@ -77,22 +68,32 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
         if amount < 1 or amount > self.genome_length:
             raise AttributeError("Amount of genes out of range")
         indexes = [random.randrange(0, self.genome_length) for _ in range(random.randrange(1, amount))]
+        genes = []
         for i in indexes:
             if random.random() <= p:
-                self.mutate_gene(i)
+                genes.append(i)
+        self.mutate_genes(genes)
 
     def mutate_multi_uniform(self: Self, p: float):
         "Every gene can be mutated individually according to probability p"
         if p < 0 or p > 1:
             raise AttributeError("Probability out of range")
+        genes = []
         for i in range(self.genome_length):
             if random.random() <= p:
-                self.mutate_gene(i)
+                genes.append(i)
+        self.mutate_genes(genes)
 
     def mutate_complete(self: Self, p: float):
         "The entire genome will mutate according to probability p"
         if p < 0 or p > 1:
             raise AttributeError("Probability out of range")
         if random.random() <= p:
-            for i in range(self.genome_length):
-                self.mutate_gene(i)
+            self.mutate_genes(list(range(self.genome_length)))
+
+IndividualFactoryT = TypeVar("IndividualFactoryT", bound="IndividualFactory")
+
+class IndividualFactory(ABC, Generic[IndividualT]):
+    @abstractmethod
+    def create(self: Self) -> IndividualT:
+        pass
