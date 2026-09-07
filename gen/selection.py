@@ -22,7 +22,8 @@ class EliteSelection(SelectionMethod):
         individuals = population.by_fitness()
         length = len(individuals)
         for idx, p in enumerate(individuals):
-            times = ceil(amount * idx / length)
+            times = ceil((amount - idx) / length)
+            print(times)
             if times == 0:
                 break
             result.extend([p for _ in range(times)])

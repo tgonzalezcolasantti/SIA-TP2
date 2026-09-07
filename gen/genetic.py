@@ -1,5 +1,6 @@
 from enum import Enum
 import random
+from statistics import mean, stdev
 from typing import Generic, Optional, Self, Sequence, Tuple
 from matplotlib import pyplot as plt
 from gen.cross import CrossMethod
@@ -40,15 +41,14 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT]):
         new_population=self.cross_method.cross(best, len(self.population.individuals))
         #Step 3: Mutations
         for individual in new_population.individuals:
-            p = random.random()
             if self.mutation_method == MutationType.SINGLEGENE:
-                individual.mutate_single(p=p)
+                individual.mutate_single(p=self.mutation_probability)
             elif self.mutation_method == MutationType.MULTI_LIMITED:
-                individual.mutate_multi_lim(p=p, amount=self.mutation_multi_limit)
+                individual.mutate_multi_lim(p=self.mutation_probability, amount=self.mutation_multi_limit)
             elif self.mutation_method == MutationType.MULTI_COMPLETE:
-                individual.mutate_complete(p=p)
+                individual.mutate_complete(p=self.mutation_probability)
             elif self.mutation_method == MutationType.MULTI_UNIFORM:
-                individual.mutate_multi_uniform(p=p)
+                individual.mutate_multi_uniform(p=self.mutation_probability)
         #Step 4: Recombine populations
         if self.recombination_method == RecombinationType.ADDITIVE:
             self.population = Population(random.choices(self.population.individuals + new_population.individuals, k=len(self.population.individuals)))
@@ -57,11 +57,14 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT]):
     def run(self: Self, max_generations: int = 10000, target_score: float = 0.8) -> Tuple[Sequence[IndividualT], float]:
         plt.ion()
         graph = plt.imshow(self.target.shapes_to_image(self.population.individuals))
-
-        for i in range(max_generations):
+        scores = [self.target.total_score(self.population.individuals)]
+        for i in range(1, max_generations):
             self.run_generation()
             score = self.target.total_score(self.population.individuals)
-            print(f"Generation {i} with score {score}")
+            scores.append(score)
+            print(f"Generation {i} with score {score:.4f} (mean: {mean(scores):.4f}, sdev: {stdev(scores):.4f})")
+            for t in self.population.individuals:
+                print(t.to_svg_polygon(self.target.image.shape[1], self.target.image.shape[0])) # type: ignore
             graph.set_data(self.target.shapes_to_image(self.population.individuals))
             plt.draw()
             plt.pause(0.01)

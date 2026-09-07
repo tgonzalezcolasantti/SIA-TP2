@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from math import ceil
 import random
-from typing import Any, Generic, List, Self, Sequence, Tuple, TypeVar
+from typing import Generic, List, Self, Sequence, Tuple, TypeVar
 
 from numpy import ndarray
 

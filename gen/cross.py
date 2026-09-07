@@ -21,6 +21,12 @@ class CrossMethod(ABC):
             new_individuals.extend(p1.swap_genes(p2, self.get_locuses(p1.genome_length)))
         return Population(new_individuals)
 
+class BadCross(CrossMethod):
+    "Doesnt't really do anything"
+    @override
+    def get_locuses(self: Self, genome_length: int) -> List[int]:
+        return []
+
 class OnePointCross(CrossMethod):
     "Swaps genes from a random position until end of genome"
     @override
