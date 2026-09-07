@@ -1,6 +1,6 @@
 from enum import Enum
 import random
-from typing import Generic, List, Self, Sequence, Tuple
+from typing import Generic, Optional, Self, Sequence, Tuple
 
 from gen.cross import CrossMethod
 from gen.population import IndividualT, MutationType, TargetT, Population
@@ -20,8 +20,8 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT]):
         cross_method: CrossMethod,
         mutation_method: MutationType,
         mutation_probability: float,
-        mutation_multi_limit: int,
         recombination_method: RecombinationType,
+        mutation_multi_limit: Optional[int] = None,
 
     ):
         self.population: Population = Population([individual.from_scratch(target) for _ in range(initial_size)])

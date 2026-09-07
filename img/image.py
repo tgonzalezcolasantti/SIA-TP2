@@ -97,8 +97,8 @@ class Triangle(Shape, Individual):
     def to_svg_polygon(self: Self, x: int, y: int) -> str:
         points = []
         for p in self.points:
-            points.append(f'{int(p[0] * x)},{p[1] * y}')
-        return f'<polygon points="{" ".join(points)}" fill="#{self.color[0]:x}{self.color[1]:x}{self.color[2]:x}" fill-opacity={self.color[3]/255:.2f}/>'
+            points.append(f'{int(p[0] * x)},{int(p[1] * y)}')
+        return f'<polygon points="{" ".join(points)}" fill="#{self.color[0]:x}{self.color[1]:x}{self.color[2]:x}" fill-opacity="{self.color[3]/255:.2f}"/>'
 
     def score(self: Self) -> float:
         newimage = self.target.shapes_to_image([self], with_background=False)
@@ -110,8 +110,8 @@ class Image(Target):
         self.image = image
 
     def shapes_to_image(self: Self, shapes: Sequence[Shape], with_background: bool = True) -> ndarray:
-        x = self.image.shape[0]
-        y = self.image.shape[1]
+        y = self.image.shape[0]
+        x = self.image.shape[1]
         svg = f'<svg height="{y}" width="{x}" viewBox="0 0 {x} {y}" xmlns="http://www.w3.org/2000/svg">'
         for s in shapes:
             svg += s.to_svg_polygon(x, y)
@@ -130,12 +130,12 @@ class Image(Target):
 
     def image_similarity(self: Self, image: ndarray) -> float:
         global_score = 0
-        for x in range(self.image.shape[0]):
-            for y in range(self.image.shape[1]):
+        for y in range(self.image.shape[0]):
+            for x in range(self.image.shape[1]):
                 if image[x,y,3] > 0:
-                    pixel_score = 1
+                    pixel_score = 1.0
                     for p in range(self.image.shape[2]):
-                        pixel_score -= abs(self.image[x,y,p] - image[x,y,p]) / (255*3)
+                        pixel_score -= abs(self.image[y,x,p] - image[x,y,p]) / (255*3)
                     global_score += pixel_score
         return global_score / (self.image.shape[0] * self.image.shape[1])
 
