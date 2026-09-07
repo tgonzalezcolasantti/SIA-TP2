@@ -5,6 +5,8 @@ from math import ceil
 import random
 from typing import Any, Generic, List, Self, Sequence, Tuple, TypeVar
 
+from numpy import ndarray
+
 class MutationType(Enum):
     SINGLEGENE = "Single Gene"
     MULTI_LIMITED = "Multigene limited"
@@ -18,6 +20,11 @@ class Target(ABC, Generic[IndividualT]):
     @abstractmethod
     def total_score(self: Self, population: Sequence[IndividualT]) -> float:
         "Returns the global score for this generation"
+
+    @abstractmethod
+    def shapes_to_image(self: Self, shapes: Sequence[IndividualT], with_background: bool = True) -> ndarray:
+        "Return an image"
+
 
 class Population(Generic[IndividualT]):
     def __init__(self: Self, individuals: List[IndividualT]):

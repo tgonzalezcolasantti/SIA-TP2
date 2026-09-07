@@ -1,7 +1,7 @@
 from enum import Enum
 import random
 from typing import Generic, Optional, Self, Sequence, Tuple
-
+from matplotlib import pyplot as plt
 from gen.cross import CrossMethod
 from gen.population import IndividualT, MutationType, TargetT, Population
 from gen.selection import SelectionMethod
@@ -55,10 +55,16 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT]):
         self.population = new_population #For now population size is constant, so this is valid
 
     def run(self: Self, max_generations: int = 10000, target_score: float = 0.8) -> Tuple[Sequence[IndividualT], float]:
+        plt.ion()
+        graph = plt.imshow(self.target.shapes_to_image(self.population.individuals))
+
         for i in range(max_generations):
             self.run_generation()
             score = self.target.total_score(self.population.individuals)
             print(f"Generation {i} with score {score}")
+            graph.set_data(self.target.shapes_to_image(self.population.individuals))
+            plt.draw()
+            plt.pause(0.01)
             if score >= target_score:
                 break
         return (self.population.individuals, self.target.total_score(self.population.individuals))
