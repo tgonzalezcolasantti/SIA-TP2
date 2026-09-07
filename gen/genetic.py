@@ -40,7 +40,11 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
 
     def run_generation(self: Self) -> None:
         #Step 1: Selection
-        best=self.selection_method.select(population=self.population, amount=int(len(self.population.individuals)/2))
+        parent_amount = max(1, len(self.population.individuals) // 2)
+        best = self.selection_method.select(
+            population=self.population,
+            amount=parent_amount,
+        )
         #Step 2: Crossbreeding
         new_population=self.cross_method.cross(best, len(self.population.individuals))
         #Step 3: Mutations
