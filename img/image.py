@@ -34,6 +34,8 @@ class Triangle(Shape):
     def __init__(self: Self, points: List[Point], color: Color):
         self.points: List[Point] = list(points)
         self.color: Color = color
+        self.rendered: ndarray | None = None
+        self.last_hash: int = hash(self)
 
     @staticmethod
     def random_point() -> Point:
@@ -102,6 +104,9 @@ class Triangle(Shape):
             new_value = (new_value + 1) % 256
         color[color_index] = new_value
         self.color = tuple(color)  # type: ignore[assignment]
+    
+    def __hash__(self: Self) -> int:
+        return hash((*self.points, self.color))
 
     @override
     def to_svg_polygon(self: Self, x: int, y: int) -> str:
@@ -117,18 +122,21 @@ class TargetImage(Target["ImageIndividual"]):
     def __init__(self: Self, image: ndarray):
         self.image = image
 
+    # def image_similarity(self: Self, image: ndarray) -> float:
+    #     global_score = 0
+    #     for y in range(self.image.shape[0]):
+    #         for x in range(self.image.shape[1]):
+    #             # if image[y, x, 3] > 0:
+    #             pixel_score = 1.0
+    #             for channel in range(self.image.shape[2]):
+    #                 pixel_score -= abs(
+    #                     self.image[y, x, channel] - image[y, x, channel]
+    #                 ) / (255 * 3)
+    #             global_score += pixel_score ** 4
+    #     return global_score / (self.image.shape[0] * self.image.shape[1])
     def image_similarity(self: Self, image: ndarray) -> float:
-        global_score = 0
-        for y in range(self.image.shape[0]):
-            for x in range(self.image.shape[1]):
-                if image[y, x, 3] > 0:
-                    pixel_score = 1.0
-                    for channel in range(self.image.shape[2]):
-                        pixel_score -= abs(
-                            self.image[y, x, channel] - image[y, x, channel]
-                        ) / (255 * 3)
-                    global_score += pixel_score ** 4
-        return global_score / (self.image.shape[0] * self.image.shape[1])
+        return np.sum((1-np.abs((np.subtract(self.image.ravel(),image.ravel(),dtype=np.int16))/255))**4) / (np.prod(self.image.shape))
+        
 
     def total_score(self: Self, population: Sequence[ImageIndividual]) -> float:
         return mean([i.fitness for i in population])
@@ -139,6 +147,8 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
         self.target = image
         self.triangles = triangles
         self.genome_length = len(triangles) * Triangle.genome_length
+        self.last_hash: int = hash(self)
+        self.rendered: ndarray | None = None
         self.fitness = self.score()
 
     @classmethod
@@ -177,32 +187,35 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
             triangle.mutate_gene(gene_index)
         self.fitness = self.score()
 
-    def render(
-        self: Self,
-        with_background: bool = True,
-    ) -> ndarray:
-        height, width = self.target.image.shape[:2]
-        svg = (
-            f'<svg height="{height}" width="{width}" viewBox="0 0 {width} {height}" '
-            'xmlns="http://www.w3.org/2000/svg">'
-        )
-        if with_background:
+    def render(self: Self) -> ndarray:
+        if hash(self) != self.last_hash or self.rendered is None:
+            height, width = self.target.image.shape[:2]
+            svg = (
+                f'<svg height="{height}" width="{width}" viewBox="0 0 {width} {height}" '
+                'xmlns="http://www.w3.org/2000/svg">'
+            )
             svg += (
                 f'<rect width="{width}" height="{height}" fill="#ffffff"/>'
             )
-        for shape in self.triangles:
-            svg += shape.to_svg_polygon(width, height)
-        svg += "</svg>"
-        svg_img = svg2png(svg, output_width=width, output_height=height)
-        if svg_img:
-            return np.array(pimg.open(io.BytesIO(svg_img)).convert("RGBA"))
-        raise ValueError("Cannot generate image")
+            for shape in self.triangles:
+                svg += shape.to_svg_polygon(width, height)
+            svg += "</svg>"
+            svg_img = svg2png(svg, output_width=width, output_height=height)
+            if svg_img:
+                self.rendered = np.array(pimg.open(io.BytesIO(svg_img)).convert("RGB"))
+                self.last_hash = hash(self)
+            else:
+                raise ValueError("Cannot generate image")
+        return self.rendered
 
     def score(self: Self) -> float:
         return self.target.image_similarity(self.render())
 
     def __lt__(self: Self, other: ImageIndividual) -> bool:
         return self.fitness < other.fitness
+
+    def __hash__(self: Self) -> int:
+        return hash((*self.triangles,))
 
 class ImageIndividualFactory(IndividualFactory, Generic[Shapelike]):
     def __init__(self: Self, target: TargetImage, shape: type[Shapelike], shape_count: int):

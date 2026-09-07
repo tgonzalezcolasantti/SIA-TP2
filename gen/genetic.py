@@ -54,12 +54,12 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
             self.population = Population(random.choices(self.population.individuals + new_population.individuals, k=len(self.population.individuals)))
         self.population = new_population #For now population size is constant, so this is valid
 
-    def run(self: Self, max_generations: int = 10000, target_score: float = 0.8) -> Tuple[Sequence[IndividualT], float]:
+    def run(self: Self, max_generations: int = 10000, target_score: float = 0.8) -> Tuple[IndividualT, float]:
         plt.ion()
-        graph = plt.imshow(max(self.population.individuals).render(self.population.individuals))
+        graph = plt.imshow(max(self.population.individuals).render())
         plt.draw()
         plt.pause(1)
-        for i in range(max_generations):
+        for i in range(1, max_generations):
             self.run_generation()
             score = self.target.total_score(self.population.individuals)
             print(f"Generation {i} with score {score}")
@@ -68,4 +68,4 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
             plt.pause(0.01)
             if score >= target_score:
                 break
-        return (self.population.individuals, self.target.total_score(self.population.individuals))
+        return (max(self.population.individuals), self.target.total_score(self.population.individuals))
