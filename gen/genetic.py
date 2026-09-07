@@ -61,8 +61,8 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
         plt.pause(1)
         for i in range(1, max_generations):
             self.run_generation()
-            score = self.target.total_score(self.population.individuals)
-            print(f"Generation {i} with score {score}")
+            score = max(self.population.individuals).fitness
+            print(f"Generation {i} with score {score:.4f}")
             graph.set_data(max(self.population.individuals).render())
             plt.draw()
             plt.pause(0.01)

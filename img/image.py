@@ -134,7 +134,7 @@ class TargetImage(Target["ImageIndividual"]):
     #             global_score += pixel_score ** 4
     #     return global_score / (self.image.shape[0] * self.image.shape[1])
     def image_similarity(self: Self, image: ndarray) -> float:
-        return np.sum((1-np.abs((np.subtract(self.image.ravel(),image.ravel(),dtype=np.int16))/255))) / (np.prod(self.image.shape))
+        return np.sum((1-np.abs((np.subtract(self.image.ravel(),image.ravel(),dtype=np.int16))/255))**2) / (np.prod(self.image.shape))
         
 
     def total_score(self: Self, population: Sequence[ImageIndividual]) -> float:
