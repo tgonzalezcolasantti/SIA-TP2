@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import io
+from math import sqrt
 import random
 from statistics import mean
 from typing import Generic, List, Self, Sequence, Tuple, TypeVar, override
@@ -13,7 +14,7 @@ from cairosvg import svg2png
 
 from gen.population import Individual, IndividualFactory, Target
 
-Color = Tuple[int, int, int]
+Color = Tuple[int, int, int, int]
 Point = Tuple[float, float]
 Shapelike = TypeVar("Shapelike", bound="Shape")
 
@@ -29,13 +30,11 @@ class Shape(ABC):
         pass
 
 class Triangle(Shape):
-    genome_length = 9
+    genome_length = 10
 
     def __init__(self: Self, points: List[Point], color: Color):
         self.points: List[Point] = list(points)
         self.color: Color = color
-        self.rendered: ndarray | None = None
-        self.last_hash: int = hash(self)
 
     @staticmethod
     def random_point() -> Point:
@@ -47,7 +46,7 @@ class Triangle(Shape):
             random.randint(0, 255),
             random.randint(0, 255),
             random.randint(0, 255),
-            #random.randint(0, 255),
+            random.randint(0, 255),
         )
 
     @classmethod
@@ -115,7 +114,7 @@ class Triangle(Shape):
             points.append(f"{int(point[0] * x)},{int(point[1] * y)}")
         return (
             f'<polygon points="{" ".join(points)}" '
-            f'fill="#{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x}"/>'
+            f'fill="#{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x}" fill-opacity="{self.color[3]/255:.2f}"/>'
         )
 
 class TargetImage(Target["ImageIndividual"]):

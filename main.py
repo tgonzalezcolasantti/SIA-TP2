@@ -15,15 +15,15 @@ def main():
     problem = TargetImage(target)
     algo = GeneticAlgorithm(
         target=problem,
-        initial_size=100,
+        initial_size=200,
         individual_factory=ImageIndividualFactory(target=problem, shape=Triangle, shape_count=20),
-        selection_method=BoltzmannSelection(initial_temp=1, target_temp=0.01, rate=0.05),
+        selection_method=RouletteSelection(),
         cross_method=UniformCross(),
         mutation_method=MutationType.MULTI_UNIFORM,
-        mutation_probability=0.01,
+        mutation_probability=0.05,
         recombination_method=RecombinationType.ADDITIVE
     )
-    ans, _ = algo.run(target_score=0.9)
+    ans, _ = algo.run(target_score=0.99)
     for triangle in ans.triangles:
         print(triangle.to_svg_polygon(target.shape[1], target.shape[0]))
 
