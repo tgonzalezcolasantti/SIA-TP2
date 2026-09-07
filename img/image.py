@@ -118,9 +118,9 @@ class Image(Target):
         svg += '</svg>'
         try:
             if with_background:
-                svg_img = svg2png(svg, output_width=self.image.shape[0], output_height=self.image.shape[1], background_color="white")
+                svg_img = svg2png(svg, output_width=self.image.shape[1], output_height=self.image.shape[0], background_color="white")
             else:
-                svg_img = svg2png(svg, output_width=self.image.shape[0], output_height=self.image.shape[1])
+                svg_img = svg2png(svg, output_width=self.image.shape[1], output_height=self.image.shape[0])
             if svg_img:
                 raster = np.array(pimg.open(io.BytesIO(svg_img)).convert('RGBA'))
                 return raster
@@ -132,10 +132,10 @@ class Image(Target):
         global_score = 0
         for y in range(self.image.shape[0]):
             for x in range(self.image.shape[1]):
-                if image[x,y,3] > 0:
+                if image[y,x,3] > 0:
                     pixel_score = 1.0
                     for p in range(self.image.shape[2]):
-                        pixel_score -= abs(self.image[y,x,p] - image[x,y,p]) / (255*3)
+                        pixel_score -= abs(self.image[y,x,p] - image[y,x,p]) / (255*3)
                     global_score += pixel_score
         return global_score / (self.image.shape[0] * self.image.shape[1])
 
