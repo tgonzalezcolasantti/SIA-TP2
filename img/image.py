@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-import io
-from math import sqrt
 import random
 from statistics import mean
 from typing import Generic, List, Self, Sequence, Tuple, TypeVar, override
 
-from PIL import Image as pimg
+from PIL import Image as pimg, ImageDraw
 import numpy as np
 from numpy import ndarray
-from cairosvg import svg2png
 
 from gen.population import Individual, IndividualFactory, Target
 
@@ -23,6 +20,10 @@ class Shape(ABC):
     @abstractmethod
     def to_svg_polygon(self: Self, x: int, y: int) -> str:
         "Converts this shape into a SVG polygon"
+
+    @abstractmethod
+    def draw_on(self: Self, canvas: pimg.Image, width: int, height: int) -> None:
+        "Alpha-composites this shape onto a Pillow canvas"
 
     @classmethod
     @abstractmethod
@@ -117,6 +118,16 @@ class Triangle(Shape):
             f'fill="#{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x}" fill-opacity="{self.color[3]/255:.2f}"/>'
         )
 
+    @override
+    def draw_on(self: Self, canvas: pimg.Image, width: int, height: int) -> None:
+        points = [
+            (int(point[0] * width), int(point[1] * height))
+            for point in self.points
+        ]
+        overlay = pimg.new("RGBA", (width, height), (0, 0, 0, 0))
+        ImageDraw.Draw(overlay).polygon(points, fill=self.color)
+        canvas.alpha_composite(overlay)
+
 class TargetImage(Target["ImageIndividual"]):
     def __init__(self: Self, image: ndarray):
         self.image = image
@@ -134,7 +145,9 @@ class TargetImage(Target["ImageIndividual"]):
     #             global_score += pixel_score ** 4
     #     return global_score / (self.image.shape[0] * self.image.shape[1])
     def image_similarity(self: Self, image: ndarray) -> float:
-        return np.sum((1-np.abs((np.subtract(self.image.ravel(),image.ravel(),dtype=np.int16))/255))**2) / (np.prod(self.image.shape))
+        target = self.image[:, :, :3].astype(np.float32)
+        candidate = image[:, :, :3].astype(np.float32)
+        return -float(np.mean(np.square(target - candidate)))
         
 
     def total_score(self: Self, population: Sequence[ImageIndividual]) -> float:
@@ -142,13 +155,13 @@ class TargetImage(Target["ImageIndividual"]):
 
 
 class ImageIndividual(Individual["ImageIndividual", TargetImage]):
-    def __init__(self: Self, image: TargetImage, triangles: List[Triangle]):
+    def __init__(self: Self, image: TargetImage, triangles: List[Triangle], evaluate: bool = True):
         self.target = image
         self.triangles = triangles
         self.genome_length = len(triangles) * Triangle.genome_length
         self.last_hash: int = hash(self)
         self.rendered: ndarray | None = None
-        self.fitness = self.score()
+        self.fitness = self.score() if evaluate else float("-inf")
 
     @classmethod
     def from_scratch(cls: type[ImageIndividual], shape: type[Shapelike], target: TargetImage, count: int) -> ImageIndividual:
@@ -168,8 +181,8 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
     ) -> Tuple[ImageIndividual, ImageIndividual]:
         if self.genome_length != other.genome_length:
             raise ValueError("Individuals must have the same genome length")
-        first_child = ImageIndividual(self.target, [triangle.clone() for triangle in self.triangles])
-        second_child = ImageIndividual(other.target, [triangle.clone() for triangle in other.triangles])
+        first_child = ImageIndividual(self.target, [triangle.clone() for triangle in self.triangles], evaluate=False)
+        second_child = ImageIndividual(other.target, [triangle.clone() for triangle in other.triangles], evaluate=False)
         for position in locuses:
             first_triangle, gene_index = first_child._locus(position)
             second_triangle, other_gene_index = second_child._locus(position)
@@ -189,22 +202,11 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
     def render(self: Self) -> ndarray:
         if hash(self) != self.last_hash or self.rendered is None:
             height, width = self.target.image.shape[:2]
-            svg = (
-                f'<svg height="{height}" width="{width}" viewBox="0 0 {width} {height}" '
-                'xmlns="http://www.w3.org/2000/svg">'
-            )
-            svg += (
-                f'<rect width="{width}" height="{height}" fill="#ffffff"/>'
-            )
+            canvas = pimg.new("RGBA", (width, height), (255, 255, 255, 255))
             for shape in self.triangles:
-                svg += shape.to_svg_polygon(width, height)
-            svg += "</svg>"
-            svg_img = svg2png(svg, output_width=width, output_height=height)
-            if svg_img:
-                self.rendered = np.array(pimg.open(io.BytesIO(svg_img)).convert("RGB"))
-                self.last_hash = hash(self)
-            else:
-                raise ValueError("Cannot generate image")
+                shape.draw_on(canvas, width, height)
+            self.rendered = np.asarray(canvas.convert("RGB"))
+            self.last_hash = hash(self)
         return self.rendered
 
     def score(self: Self) -> float:

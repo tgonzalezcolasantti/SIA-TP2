@@ -13,13 +13,17 @@ class CrossMethod(ABC):
 
     def cross(self: Self, population: List[Individual], children: int) -> Population:
         "Crossbreeds current population to generate requested children and returns a new population with them"
+        if children < 0:
+            raise ValueError("children cannot be negative")
+        if children and not population:
+            raise ValueError("Cannot cross an empty population")
         new_individuals = []
         length = len(population)
         for _ in range(0, children, 2):
             p1 = population[random.randrange(0, length)]
             p2 = population[random.randrange(0, length)]
             new_individuals.extend(p1.swap_genes(p2, self.get_locuses(p1.genome_length)))
-        return Population(new_individuals)
+        return Population(new_individuals[:children])
 
 class BadCross(CrossMethod):
     "Doesnt't really do anything"

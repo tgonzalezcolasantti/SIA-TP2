@@ -43,17 +43,19 @@ class SlotSelection(SelectionMethod, ABC):
     ) -> List[Individual]:
         """Picks individuals with scores that fall in slot transitions.
         aka the first individual with a score greater than the current slot position"""
-        idx = 0
+        if not slots:
+            return []
+        if not arf_population:
+            raise ValueError("Cannot select from an empty population")
         result = []
-        for fitness, individual in arf_population[idx:]:
-            try:
-                if fitness >= slots[0]:
-                    slots.pop(0)
-                    result.append(individual)
-                else:
-                    idx += 1
-            except IndexError:
-                break
+        individual_index = 0
+        for slot in sorted(slots):
+            while (
+                individual_index < len(arf_population) - 1
+                and arf_population[individual_index][0] < slot
+            ):
+                individual_index += 1
+            result.append(arf_population[individual_index][1])
         return result
 
 class RouletteSelection(SlotSelection, SelectionMethod):
@@ -73,10 +75,12 @@ class RouletteSelection(SlotSelection, SelectionMethod):
 class UniversalSelection(SlotSelection, SelectionMethod):
     "Slot selection with evenly-spaced slots with a random offset"
     def select(self: Self, population: Population, amount: int) -> List[Individual]:
+        if amount == 0:
+            return []
         rand = random.random()
         return self.slot_pick(
             arf_population=population.accumulated_relative_fitness(),
-            slots=[rand + i / amount for i in range(amount)]
+            slots=[(rand + i) / amount for i in range(amount)]
         )
 
 class PseudoFitnessSelection(RouletteSelection, SelectionMethod, ABC):
@@ -91,13 +95,20 @@ class PseudoFitnessSelection(RouletteSelection, SelectionMethod, ABC):
 
     def select(self: Self, population: Population, amount: int) -> List[Individual]:
         by_fitness = population.by_fitness()
-        by_pseudo_fitness = sorted(
-            [(self.pseudofitness(idx, by_fitness), p) for idx, p in enumerate(by_fitness)],
-            key=lambda x: x[0],
-            reverse=True
-        )
+        scores = [self.pseudofitness(idx, by_fitness) for idx in range(len(by_fitness))]
+        total = sum(scores)
+        if scores and total <= 0:
+            scores = [1.0] * len(scores)
+            total = len(scores)
+        accumulator = 0.0
+        accumulated_scores = []
+        for score, individual in zip(scores, by_fitness):
+            accumulator += score / total
+            accumulated_scores.append((accumulator, individual))
+        if accumulated_scores:
+            accumulated_scores[-1] = (1.0, accumulated_scores[-1][1])
         ans = self.slot_pick(
-            arf_population=by_pseudo_fitness,
+            arf_population=accumulated_scores,
             slots = self.generate_slots(amount)
         )
         self.prepare_next()
@@ -112,7 +123,7 @@ class RankingSelection(PseudoFitnessSelection, SelectionMethod):
     def pseudofitness(self: Self, idx: int, population: List[Individual]) -> float:
         if not self.length:
             self.length = len(population)
-        return self.length - idx + 1 / self.length
+        return (self.length - idx) / self.length
 
     @override
     def prepare_next(self: Self) -> None:
@@ -136,7 +147,11 @@ class BoltzmannSelection(PseudoFitnessSelection, SelectionMethod):
     @override
     def pseudofitness(self: Self, idx: int, population: List[Individual]) -> float:
         if not self.population_exp:
-            self.population_exp = [self.individual_exp(p) for p in population]
+            maximum_fitness = max(individual.fitness for individual in population)
+            self.population_exp = [
+                exp((individual.fitness - maximum_fitness) / self.current_temp)
+                for individual in population
+            ]
             self.avg_exp = mean(self.population_exp)
         return self.population_exp[idx] / self.avg_exp
 
