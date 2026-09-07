@@ -5,15 +5,15 @@ from gen.cross import UniformCross
 from gen.genetic import GeneticAlgorithm, RecombinationType
 from gen.population import MutationType
 from gen.selection import RouletteSelection
-from img.image import Image, ImageIndividual, ImageProblem
+from img.image import ImageIndividualFactory, TargetImage, ImageIndividual, TargetImage, Triangle
 
 def main():
     target = np.array(pimg.open("./flag_argentina.png").convert("RGB"))
-    problem = ImageProblem(Image(target), triangle_count=20)
+    problem = TargetImage(target)
     algo = GeneticAlgorithm(
         target=problem,
         initial_size=20,
-        individual=ImageIndividual,
+        individual_factory=ImageIndividualFactory(target=problem, shape=Triangle, shape_count=20),
         selection_method=RouletteSelection(),
         cross_method=UniformCross(),
         mutation_method=MutationType.MULTI_UNIFORM,

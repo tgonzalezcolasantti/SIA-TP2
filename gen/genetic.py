@@ -3,19 +3,19 @@ import random
 from typing import Generic, Optional, Self, Sequence, Tuple
 from matplotlib import pyplot as plt
 from gen.cross import CrossMethod
-from gen.population import IndividualT, MutationType, TargetT, Population
+from gen.population import IndividualFactoryT, IndividualT, MutationType, TargetT, Population
 from gen.selection import SelectionMethod
 
 class RecombinationType(Enum):
     ADDITIVE = "Additive"
     EXCLUSIVE = "Exclusive"
 
-class GeneticAlgorithm(Generic[IndividualT, TargetT]):
+class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
     def __init__(
         self: Self,
         target: TargetT,
         initial_size: int,
-        individual: type[IndividualT],
+        individual_factory: IndividualFactoryT,
         selection_method: SelectionMethod,
         cross_method: CrossMethod,
         mutation_method: MutationType,
@@ -24,7 +24,7 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT]):
         mutation_multi_limit: Optional[int] = None,
 
     ):
-        self.population: Population = Population([individual.from_scratch(target) for _ in range(initial_size)])
+        self.population: Population = Population([individual_factory.create() for _ in range(initial_size)])
         self.target=target
         self.selection_method=selection_method
         self.cross_method=cross_method
@@ -56,13 +56,14 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT]):
 
     def run(self: Self, max_generations: int = 10000, target_score: float = 0.8) -> Tuple[Sequence[IndividualT], float]:
         plt.ion()
-        graph = plt.imshow(self.target.shapes_to_image(self.population.individuals))
-
+        graph = plt.imshow(max(self.population.individuals).render(self.population.individuals))
+        plt.draw()
+        plt.pause(1)
         for i in range(max_generations):
             self.run_generation()
             score = self.target.total_score(self.population.individuals)
             print(f"Generation {i} with score {score}")
-            graph.set_data(self.target.shapes_to_image(self.population.individuals))
+            graph.set_data(max(self.population.individuals).render())
             plt.draw()
             plt.pause(0.01)
             if score >= target_score:
