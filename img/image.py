@@ -27,7 +27,10 @@ class Shape(ABC):
 
     @classmethod
     @abstractmethod
-    def from_scratch(cls: type[Shapelike]) -> Triangle:
+    def from_scratch(
+        cls: type[Shapelike],
+        target_image: ndarray | None = None,
+    ) -> Triangle:
         pass
 
 class Triangle(Shape):
@@ -51,8 +54,37 @@ class Triangle(Shape):
         )
 
     @classmethod
-    def from_scratch(cls: type[Triangle]) -> Triangle:
-        return cls([cls.random_point() for _ in range(3)], cls.random_color())
+    def from_scratch(
+        cls: type[Triangle],
+        target_image: ndarray | None = None,
+    ) -> Triangle:
+        points = [cls.random_point() for _ in range(3)]
+        if target_image is None or random.random() < 0.15:
+            return cls(points, cls.random_color())
+        return cls(points, cls.average_target_color(points, target_image))
+
+    @staticmethod
+    def average_target_color(points: List[Point], target_image: ndarray) -> Color:
+        height, width = target_image.shape[:2]
+        pixel_points = [
+            (
+                min(width - 1, int(x * width)),
+                min(height - 1, int(y * height)),
+            )
+            for x, y in points
+        ]
+        mask = pimg.new("1", (width, height), 0)
+        ImageDraw.Draw(mask).polygon(pixel_points, fill=1)
+        covered_pixels = target_image[np.asarray(mask, dtype=bool)]
+        if covered_pixels.size == 0:
+            return Triangle.random_color()
+        average_rgb = np.rint(covered_pixels[:, :3].mean(axis=0)).astype(int)
+        return (
+            int(average_rgb[0]),
+            int(average_rgb[1]),
+            int(average_rgb[2]),
+            255,
+        )
 
     def clone(self: Self) -> Triangle:
         return Triangle(list(self.points), self.color)
@@ -165,7 +197,10 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
 
     @classmethod
     def from_scratch(cls: type[ImageIndividual], shape: type[Shapelike], target: TargetImage, count: int) -> ImageIndividual:
-        return cls(target, [shape.from_scratch() for _ in range(count)])
+        return cls(
+            target,
+            [shape.from_scratch(target.image) for _ in range(count)],
+        )
 
     def _locus(self: Self, position: int) -> Tuple[Triangle, int]:
         if not 0 <= position < self.genome_length:
