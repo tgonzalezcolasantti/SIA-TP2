@@ -40,6 +40,9 @@ class Shape(ABC):
 
 class Triangle(Shape):
     genome_length = 10
+    coordinate_mutation_sigma = 0.03
+    color_mutation_sigma = 15.0
+    random_reset_probability = 0.10
 
     def __init__(self: Self, points: List[Point], color: Color):
         self.points: List[Point] = list(points)
@@ -126,15 +129,33 @@ class Triangle(Shape):
             if locus < 6:
                 point_index, coordinate = divmod(locus, 2)
                 point = points[point_index]
-                new_value = random.random()
-                if new_value == point[coordinate]:
-                    new_value = (new_value + 0.5) % 1
+                current_value = point[coordinate]
+                if random.random() < self.random_reset_probability:
+                    new_value = random.random()
+                else:
+                    delta = random.gauss(0, self.coordinate_mutation_sigma)
+                    new_value = max(0.0, min(1.0, current_value + delta))
+                    if new_value == current_value:
+                        new_value = max(0.0, min(1.0, current_value - delta))
+                if new_value == current_value:
+                    new_value = (
+                        current_value + 1e-6
+                        if current_value < 1.0
+                        else current_value - 1e-6
+                    )
                 points[point_index][coordinate] = new_value
             else:
                 color_index = locus - 6
-                new_value = random.randint(0, 255)
-                if new_value == color[color_index]:
-                    new_value = (new_value + 1) % 256
+                current_value = color[color_index]
+                if random.random() < self.random_reset_probability:
+                    new_value = random.randint(0, 255)
+                else:
+                    delta = round(random.gauss(0, self.color_mutation_sigma))
+                    new_value = max(0, min(255, current_value + delta))
+                    if new_value == current_value:
+                        new_value = max(0, min(255, current_value - delta))
+                if new_value == current_value:
+                    new_value = 1 if current_value == 0 else current_value - 1
                 color[color_index] = new_value
         self.apply_lists(points, color)
 
