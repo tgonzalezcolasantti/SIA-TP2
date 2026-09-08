@@ -118,7 +118,7 @@ def run_task(params: str, row: Dict[str, str], task: TaskID, progress: Progress,
                         row["generations"] = str(gen)
                         progress.remove_task(task)
                         return row
-            time.sleep(0.1)
+                    time.sleep(0)
 
         if progress:
             progress.remove_task(task)
@@ -149,6 +149,7 @@ def run_simulations(
     taskprogress = Progress(
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
+        MofNCompleteColumn(),
         TaskProgressColumn(),
         TimeElapsedColumn(),
         TimeRemainingColumn(),
