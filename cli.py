@@ -127,6 +127,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--boltzmann-rate", type=nonnegative_float, default=0.05)
     parser.add_argument("--seed", type=int, default=1234)
+    parser.add_argument("--output", type=str, default="best_result.png")
     parser.add_argument(
         "--no-plot",
         action="store_true",

@@ -188,6 +188,7 @@ def run_simulations(
                 visible=False,
                 is_task=True,
             )
+            params += f" --output {output / (title + ".png")}"
             jobs.append(
                 executor.apply_async(
                     run_task, (params, row, task, taskprogress, timeout)
@@ -255,7 +256,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--mutation-probabilities",
-        default="0.005,0.01,0.1,0.2",
+        default="0.001,0.01,0.1,0.2,0.4",
         help="Comma-separated seed values. Will run one run per seed per setting combo.",
     )
     parser.add_argument(

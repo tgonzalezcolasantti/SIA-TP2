@@ -1,4 +1,7 @@
+from collections import deque
 from enum import Enum
+from itertools import islice
+from statistics import mean, stdev
 from typing import Generic, Optional, Self, Tuple
 from matplotlib import pyplot as plt
 from gen.cross import CrossMethod
@@ -21,7 +24,6 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
         mutation_probability: float,
         recombination_method: RecombinationType,
         mutation_multi_limit: Optional[int] = None,
-
     ):
         if initial_size < 1:
             raise ValueError("initial_size must be at least 1")
@@ -37,6 +39,7 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
         self.recombination_method=recombination_method
         self.best_individual = max(self.population.individuals)
         self.best_score = self.best_individual.fitness
+        self.last_scores = deque(maxlen=100)
 
     def run_generation(self: Self) -> None:
         #Step 1: Selection
@@ -77,17 +80,24 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
         self.best_individual = max(self.population.individuals)
         self.best_score = self.best_individual.fitness
 
+
     def run(self: Self, max_generations: int = 10000, target_score: float = 0.0, plot: bool = True) -> Tuple[IndividualT, float]:
         if plot:
             plt.ion()
             graph = plt.imshow(self.best_individual.render())
             plt.draw()
             plt.pause(1)
+        self.last_scores.append(self.best_score)
         for i in range(1, max_generations + 1):
+            self.run_generation()
+
             if self.best_score >= target_score:
                 break
-            self.run_generation()
-            print(f"Generation {i} with MSE {-self.best_score:.4f}")
+            self.last_scores.append(int(-self.best_score))
+            if -self.best_score>= mean(self.last_scores) + stdev(self.last_scores) - 1:
+                break
+            print(f"Generation {i} with MSE {-self.best_score:.4f} ({mean(self.last_scores)} {stdev(self.last_scores)})")
+
             if plot:
                 graph.set_data(self.best_individual.render()) # type: ignore
                 plt.draw()

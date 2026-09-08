@@ -1,3 +1,4 @@
+from pathlib import Path
 import random
 
 from PIL import Image as pimg
@@ -41,11 +42,12 @@ def main():
         plot=not args.no_plot,
     )
     print(f"Final MSE: {-score:.6f}")
-    if not args.no_plot:
-        pimg.fromarray(ans.render()).save("best_result.png")
-        print("Best image saved to best_result.png")
-    for triangle in ans.triangles:
-        print(triangle.to_svg_polygon(target.shape[1], target.shape[0]))
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    pimg.fromarray(ans.render()).save(output)
+    print(f"Best image saved to {output}")
+    # for triangle in ans.triangles:
+    #     print(triangle.to_svg_polygon(target.shape[1], target.shape[0]))
 
 
 if __name__ == "__main__":
