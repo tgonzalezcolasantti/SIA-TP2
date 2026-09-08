@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import random
 from statistics import mean
-from typing import Generic, List, Self, Sequence, Tuple, TypeVar, override
+from typing import Dict, Generic, List, Self, Sequence, Tuple, TypeVar, override
 
 from PIL import Image as pimg, ImageDraw
 import numpy as np
@@ -89,54 +89,50 @@ class Triangle(Shape):
     def clone(self: Self) -> Triangle:
         return Triangle(list(self.points), self.color)
 
-    def swap_gene(self: Self, other: Triangle, position: int) -> None:
-        if not 0 <= position < self.genome_length:
-            raise IndexError("Gene position out of range")
-        if position < 6:
-            point_index, coordinate = divmod(position, 2)
-            self_point = self.points[point_index]
-            other_point = other.points[point_index]
-            if coordinate == 0:
-                self.points[point_index] = (other_point[0], self_point[1])
-                other.points[point_index] = (self_point[0], other_point[1])
+    def swap_genes(self: Self, other: Triangle, locuses: List[int]) -> None:
+        mypoints, mycolor = self.listify()
+        otherpoints, othercolor = other.listify()
+        for locus in locuses:
+            if locus < 6:
+                point_index, coordinate = divmod(locus, 2)
+                temp = mypoints[point_index][coordinate]
+                mypoints[point_index][coordinate] = otherpoints[point_index][coordinate]
+                otherpoints[point_index][coordinate] = temp
             else:
-                self.points[point_index] = (self_point[0], other_point[1])
-                other.points[point_index] = (other_point[0], self_point[1])
-            return
+                color_index = locus - 6
+                temp = mycolor[color_index]
+                mycolor[color_index] = othercolor[color_index]
+                othercolor[color_index] = temp
+        self.apply_lists(mypoints, mycolor)
+        other.apply_lists(otherpoints, othercolor)
 
-        color_index = position - 6
-        self_color = list(self.color)
-        other_color = list(other.color)
-        self_color[color_index], other_color[color_index] = (
-            other_color[color_index],
-            self_color[color_index],
-        )
-        self.color = tuple(self_color)  # type: ignore[assignment]
-        other.color = tuple(other_color)  # type: ignore[assignment]
-
-    def mutate_gene(self: Self, position: int) -> None:
-        if not 0 <= position < self.genome_length:
-            raise IndexError("Gene position out of range")
-        if position < 6:
-            point_index, coordinate = divmod(position, 2)
-            point = self.points[point_index]
-            new_value = random.random()
-            if new_value == point[coordinate]:
-                new_value = (new_value + 0.5) % 1
-            if coordinate == 0:
-                self.points[point_index] = (new_value, point[1])
-            else:
-                self.points[point_index] = (point[0], new_value)
-            return
-
-        color_index = position - 6
+    def listify(self: Self) -> Tuple[List[List[float]], List[int]]:
+        points = [list(x) for x in self.points]
         color = list(self.color)
-        new_value = random.randint(0, 255)
-        if new_value == color[color_index]:
-            new_value = (new_value + 1) % 256
-        color[color_index] = new_value
-        self.color = tuple(color)  # type: ignore[assignment]
+        return points, color
+
+    def apply_lists(self: Self, points: List[List[float]], color: List[int]):
+        self.points = [tuple(x) for x in points] # type: ignore[assignment]
+        self.color = tuple(color) # type: ignore[assignment]
     
+    def mutate_genes(self: Self, locuses: List[int]) -> None:
+        points, color = self.listify()
+        for locus in locuses:
+            if locus < 6:
+                point_index, coordinate = divmod(locus, 2)
+                point = points[point_index]
+                new_value = random.random()
+                if new_value == point[coordinate]:
+                    new_value = (new_value + 0.5) % 1
+                points[point_index][coordinate] = new_value
+            else:
+                color_index = locus - 6
+                new_value = random.randint(0, 255)
+                if new_value == color[color_index]:
+                    new_value = (new_value + 1) % 256
+                color[color_index] = new_value
+        self.apply_lists(points, color)
+
     def __hash__(self: Self) -> int:
         return hash((*self.points, self.color))
 
@@ -159,6 +155,11 @@ class Triangle(Shape):
         overlay = pimg.new("RGBA", (width, height), (0, 0, 0, 0))
         ImageDraw.Draw(overlay).polygon(points, fill=self.color)
         canvas.alpha_composite(overlay)
+
+    def __str__(self: Self) -> str:
+        return self.to_svg_polygon(1000,1000)
+    def __repr__(self: Self) -> str:
+        return str(self)
 
 class TargetImage(Target["ImageIndividual"]):
     def __init__(self: Self, image: ndarray):
@@ -218,20 +219,34 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
             raise ValueError("Individuals must have the same genome length")
         first_child = ImageIndividual(self.target, [triangle.clone() for triangle in self.triangles], evaluate=False)
         second_child = ImageIndividual(other.target, [triangle.clone() for triangle in other.triangles], evaluate=False)
-        for position in locuses:
-            first_triangle, gene_index = first_child._locus(position)
-            second_triangle, other_gene_index = second_child._locus(position)
-            assert gene_index == other_gene_index
-            first_triangle.swap_gene(second_triangle, gene_index)
+
+        swaps: Dict[Tuple[Triangle, Triangle], List[int]] = {}
+
+        for locus in locuses:
+            t1, idx = first_child._locus(locus)
+            t2, _ = second_child._locus(locus)
+            if (t1, t2) in swaps:
+                swaps[(t1, t2)].append(idx)
+            else:
+                swaps[(t1, t2)] = [idx]
+
+        for (t1, t2), positions in swaps.items():
+            t1.swap_genes(t2, positions)
         first_child.fitness = first_child.score()
         second_child.fitness = second_child.score()
         return first_child, second_child
 
     @override
-    def mutate_genes(self: Self, positions: List[int]) -> None:
-        for position in positions:
-            triangle, gene_index = self._locus(position)
-            triangle.mutate_gene(gene_index)
+    def mutate_genes(self: Self, locuses: List[int]) -> None:
+        mutations: Dict[Triangle, List[int]] = {}
+        for locus in locuses:
+            triangle, gene_index = self._locus(locus)
+            if triangle in mutations:
+                mutations[triangle].append(gene_index)
+            else:
+                mutations[triangle] = [gene_index]
+        for triangle, positions in mutations.items():
+            triangle.mutate_genes(positions)
         self.fitness = self.score()
 
     def render(self: Self) -> ndarray:
@@ -245,6 +260,7 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
         return self.rendered
 
     def score(self: Self) -> float:
+        self.triangles = self.triangles
         return self.target.image_similarity(self.render())
 
     def __lt__(self: Self, other: ImageIndividual) -> bool:
@@ -252,6 +268,12 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
 
     def __hash__(self: Self) -> int:
         return hash((*self.triangles,))
+
+    def __str__(self: Self) -> str:
+        return "INDIVIDUAL\n" + "\n".join(str(t) for t in self.triangles)
+
+    def __repr__(self: Self) -> str:
+        return str(self)
 
 class ImageIndividualFactory(IndividualFactory, Generic[Shapelike]):
     def __init__(self: Self, target: TargetImage, shape: type[Shapelike], shape_count: int):

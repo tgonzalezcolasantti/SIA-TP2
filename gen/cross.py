@@ -19,9 +19,9 @@ class CrossMethod(ABC):
             raise ValueError("Cannot cross an empty population")
         new_individuals = []
         length = len(population)
-        for _ in range(0, children, 2):
-            p1 = population[random.randrange(0, length)]
-            p2 = population[random.randrange(0, length)]
+        for _ in range(0, children+1, 2):
+            p1 = population[random.randint(0, length-1)]
+            p2 = population[random.randint(0, length-1)]
             new_individuals.extend(p1.swap_genes(p2, self.get_locuses(p1.genome_length)))
         return Population(new_individuals[:children])
 
@@ -35,23 +35,23 @@ class OnePointCross(CrossMethod):
     "Swaps genes from a random position until end of genome"
     @override
     def get_locuses(self: Self, genome_length: int) -> List[int]:
-        start_locus = random.randrange(0, genome_length)
+        start_locus = random.randint(0, genome_length)
         return list(range(start_locus, genome_length))
 
 class TwoPointCross(CrossMethod):
     "Swaps genes between p1 and p2"
     @override
     def get_locuses(self: Self, genome_length: int):
-        start_locus = random.randrange(0, genome_length)
-        end_locus = random.randrange(start_locus, genome_length)
+        start_locus = random.randint(0, genome_length)
+        end_locus = random.randint(start_locus, genome_length)
         return list(range(start_locus, end_locus))
 
 class RingCross(CrossMethod):
     "Swaps length genes starting at position and wraps around the end"
     @override
     def get_locuses(self: Self, genome_length: int) -> List[int]:
-        start_locus = random.randrange(0, genome_length)
-        length = random.randrange(0, ceil(genome_length/2))
+        start_locus = random.randint(0, genome_length)
+        length = random.randint(0, ceil(genome_length/2))
         return [i % genome_length for i in range(start_locus, start_locus + length)]
 
 class UniformCross(CrossMethod):

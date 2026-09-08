@@ -40,15 +40,21 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
 
     def run_generation(self: Self) -> None:
         #Step 1: Selection
-        parent_amount = max(1, len(self.population.individuals) // 2)
+        parent_amount = max(1, len(self.population.individuals) * 2)
+        # print(f"PARENT\n{self.population}")
         best = self.selection_method.select(
             population=self.population,
             amount=parent_amount,
         )
+        # print(f"\n\nBEST\n{best}")
+
         #Step 2: Crossbreeding
         new_population=self.cross_method.cross(best, len(self.population.individuals))
+        # print(f"\n\nCROSSBRED\n{new_population}")
+
         #Step 3: Mutations
         for individual in new_population.individuals:
+            # print(f"BEFORE: {individual}")
             if self.mutation_method == MutationType.SINGLEGENE:
                 individual.mutate_single(p=self.mutation_probability)
             elif self.mutation_method == MutationType.MULTI_LIMITED:
@@ -59,17 +65,17 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
                 individual.mutate_complete(p=self.mutation_probability)
             elif self.mutation_method == MutationType.MULTI_UNIFORM:
                 individual.mutate_multi_uniform(p=self.mutation_probability)
+            # print(f"AFTER:  {individual}")
+        # print(f"\n\nMUTATED\n{new_population}")
         #Step 4: Recombine populations
         if self.recombination_method == RecombinationType.ADDITIVE:
             combined = self.population.individuals + new_population.individuals
             self.population = Population(sorted(combined, reverse=True)[:len(self.population.individuals)])
         else:
             self.population = new_population
-
-        current_best = max(self.population.individuals)
-        if current_best.fitness > self.best_score:
-            self.best_individual = current_best
-            self.best_score = current_best.fitness
+        # print(f"RECOMBINED {self.population}")
+        self.best_individual = max(self.population.individuals)
+        self.best_score = self.best_individual.fitness
 
     def run(self: Self, max_generations: int = 10000, target_score: float = 0.0, plot: bool = True) -> Tuple[IndividualT, float]:
         graph = None

@@ -1,11 +1,8 @@
 "Population classes to run genetic algos"
 from abc import ABC, abstractmethod
 from enum import Enum
-from math import ceil
 import random
 from typing import Generic, List, Self, Sequence, Tuple, TypeVar
-
-from numpy import ndarray
 
 class MutationType(Enum):
     SINGLEGENE = "Single Gene"
@@ -42,7 +39,7 @@ class Population(Generic[IndividualT]):
             return [1 / len(fitnesses)] * len(fitnesses)
         return [fitness / total for fitness in fitnesses]
 
-    def relative_fitness(self: Self, individual: Individual)-> float:
+    def relative_fitness(self: Self, individual: IndividualT)-> float:
         try:
             index = self.individuals.index(individual)
         except ValueError as error:
@@ -62,6 +59,11 @@ class Population(Generic[IndividualT]):
             result[-1] = (1.0, result[-1][1])
         return result
 
+    def __str__(self: Self) -> str:
+        return "\n".join(str(i) for i in self.individuals)
+
+    def __repr__(self: Self) -> str:
+        return str(self)
 
 class Individual(ABC, Generic[IndividualT, TargetT]):
     fitness: float
@@ -72,8 +74,8 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
         "Swaps the gene at locuses provided between self and other and returns new children with those genes"
 
     @abstractmethod
-    def mutate_genes(self: Self, positions: List[int]) -> None:
-        "Mutates the gene at given positions"
+    def mutate_genes(self: Self, locuses: List[int]) -> None:
+        "Mutates the gene at given locuses (positions)"
 
     def mutate_single(self: Self, p: float) -> bool:
         "Selects a random gene and mutatates it according to probability p"
@@ -104,10 +106,9 @@ class Individual(ABC, Generic[IndividualT, TargetT]):
         "Every gene can be mutated individually according to probability p"
         if p < 0 or p > 1:
             raise AttributeError("Probability out of range")
-        genes = []
-        for i in range(self.genome_length):
-            if random.random() <= p:
-                genes.append(i)
+        
+        genes = [i for i in range(self.genome_length) if random.random() <= p]
+        # print(f'Mutating {genes}')
         if genes:
             self.mutate_genes(genes)
             return True

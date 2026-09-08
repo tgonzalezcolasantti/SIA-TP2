@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from gen.cross import OnePointCross, RingCross, TwoPointCross, UniformCross
+from gen.cross import BadCross, OnePointCross, RingCross, TwoPointCross, UniformCross
 from gen.genetic import RecombinationType
 from gen.population import MutationType
 from gen.selection import (
@@ -71,11 +71,11 @@ def parse_args() -> argparse.Namespace:
         help="Number of triangles used by each individual",
     )
     parser.add_argument("--population-size", type=positive_integer, default=20)
-    parser.add_argument("--max-generations", type=positive_integer, default=20000)
+    parser.add_argument("--max-generations", type=positive_integer, default=2000)
     parser.add_argument(
         "--target-error",
         type=nonnegative_float,
-        default=0.0,
+        default=500.0,
         help="Stop when the best MSE is at or below this value",
     )
     parser.add_argument(
@@ -92,8 +92,8 @@ def parse_args() -> argparse.Namespace:
         default="roulette",
     )
     parser.add_argument(
-        "--crossover",
-        choices=("one-point", "two-point", "ring", "uniform"),
+        "--crossbreed",
+        choices=("one-point", "two-point", "ring", "uniform", "bad"),
         default="uniform",
     )
     parser.add_argument(
@@ -105,7 +105,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--mutation-limit",
         type=positive_integer,
-        default=1,
+        default=10,
         help="Maximum genes selected by limited mutation",
     )
     parser.add_argument(
@@ -168,14 +168,15 @@ def create_selection(args: argparse.Namespace):
     return RankingSelection()
 
 
-def create_crossover(name: str):
-    crossovers = {
+def create_crossbreed(name: str):
+    crossbreeds = {
         "one-point": OnePointCross,
         "two-point": TwoPointCross,
         "ring": RingCross,
         "uniform": UniformCross,
+        "bad": BadCross,
     }
-    return crossovers[name]()
+    return crossbreeds[name]()
 
 
 def create_mutation(name: str) -> MutationType:

@@ -4,7 +4,7 @@ from PIL import Image as pimg
 import numpy as np
 
 from cli import (
-    create_crossover,
+    create_crossbreed,
     create_mutation,
     create_selection,
     create_survival,
@@ -29,7 +29,7 @@ def main():
             shape_count=args.triangle_count,
         ),
         selection_method=create_selection(args),
-        cross_method=create_crossover(args.crossover),
+        cross_method=create_crossbreed(args.crossbreed),
         mutation_method=create_mutation(args.mutation),
         mutation_probability=args.mutation_probability,
         recombination_method=create_survival(args.survival),
