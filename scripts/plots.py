@@ -98,29 +98,29 @@ def parse_csv(path: Path, x_main: List[str], x_groupby: str | None, y: str, filt
 def main():
     plot_folder = ROOT_DIR / 'results' / 'plots'
     plot_folder.mkdir(parents=True, exist_ok=True)
-
-    time_vs_triangles_map = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['triangles'], 'target', 'time')
+    csv_file = ROOT_DIR / 'results.csv'
+    time_vs_triangles_map = parse_csv(csv_file, ['triangles'], 'target', 'time')
     bar_graph(plot_folder / 'time_vs_triangles.png', time_vs_triangles_map, "Tiempo de ejecucion vs cantidad de triangulos", "Tiempo")
 
-    time_vs_population_map = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['population_size'], 'target', 'time')
+    time_vs_population_map = parse_csv(csv_file, ['population_size'], 'target', 'time')
     bar_graph(plot_folder / 'time_vs_population.png', time_vs_population_map, "Tiempo de ejecucion vs tamano de poblacion", "Tiempo")
 
-    precision_vs_population_map = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['population_size'], 'triangles', 'MSE')
+    precision_vs_population_map = parse_csv(csv_file, ['population_size'], 'triangles', 'MSE')
     bar_graph(plot_folder / 'precision_triangles_vs_population.png', precision_vs_population_map, "MSE final vs poblacion y triangulos", "MSE", lambda x: float(x))
 
-    precision_vs_selection = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['selection'], 'target', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform', 'survival': 'additive'})
+    precision_vs_selection = parse_csv(csv_file, ['selection'], 'target', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform', 'survival': 'additive'})
     bar_graph(plot_folder / 'precision_vs_selection.png', precision_vs_selection, "MSE final vs algoritmo de seleccion y target", "MSE")
 
-    precision_vs_selection_survival = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['selection'], 'survival', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform'})
+    precision_vs_selection_survival = parse_csv(csv_file, ['selection'], 'survival', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform'})
     bar_graph(plot_folder / 'precision_vs_selection_survival.png', precision_vs_selection_survival, "MSE final vs algoritmo de seleccion y supervivencia", "MSE", log=True)
 
-    precision_vs_crossbreed = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['triangles'], 'crossbreed', 'MSE', {'selection': 'boltzmann', 'mutation': 'uniform', 'prob':'0.01', 'survival': 'additive'})
+    precision_vs_crossbreed = parse_csv(csv_file, ['triangles'], 'crossbreed', 'MSE', {'selection': 'boltzmann', 'mutation': 'uniform', 'prob':'0.01', 'survival': 'additive'})
     bar_graph(plot_folder / 'precision_vs_crossbreed.png', precision_vs_crossbreed, "MSE final vs algoritmo de cruza y triangulos", "MSE", lambda x: float(x))
 
-    precision_vs_mutation = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['mutation', 'prob'], None, 'MSE', {'selection': 'boltzmann', 'crossbreed': 'ring', 'survival': 'additive'})
+    precision_vs_mutation = parse_csv(csv_file, ['mutation', 'prob'], None, 'MSE', {'selection': 'boltzmann', 'crossbreed': 'ring', 'survival': 'additive'})
     box_plot(plot_folder / 'precision_vs_mutation.png', precision_vs_mutation, "MSE final vs algoritmo de mutacion y probabilidad", "MSE")
 
-    precision_vs_survival = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['survival'], 'target', 'MSE', {'selection': 'boltzmann', 'crossbreed': 'ring', 'mutation': 'uniform', 'prob':'0.01'})
+    precision_vs_survival = parse_csv(csv_file, ['survival'], 'target', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform', 'prob':'0.01'})
     bar_graph(plot_folder / 'precision_vs_survival.png', precision_vs_survival, "MSE final vs metodo de supervivencia y target", "MSE")
 
     # bar_graph(plot_folder / 'expanded.png', expanded_nodes, "Nodos expandidos por algoritmo por nivel", "Nodos expandidos")
