@@ -22,8 +22,13 @@ class Shape(ABC):
         "Converts this shape into a SVG polygon"
 
     @abstractmethod
-    def draw_on(self: Self, canvas: pimg.Image, width: int, height: int) -> None:
-        "Alpha-composites this shape onto a Pillow canvas"
+    def draw_on(
+        self: Self,
+        drawing: ImageDraw.ImageDraw,
+        width: int,
+        height: int,
+    ) -> None:
+        "Draws this shape using a shared Pillow drawing context"
 
     @classmethod
     @abstractmethod
@@ -147,14 +152,17 @@ class Triangle(Shape):
         )
 
     @override
-    def draw_on(self: Self, canvas: pimg.Image, width: int, height: int) -> None:
+    def draw_on(
+        self: Self,
+        drawing: ImageDraw.ImageDraw,
+        width: int,
+        height: int,
+    ) -> None:
         points = [
             (int(point[0] * width), int(point[1] * height))
             for point in self.points
         ]
-        overlay = pimg.new("RGBA", (width, height), (0, 0, 0, 0))
-        ImageDraw.Draw(overlay).polygon(points, fill=self.color)
-        canvas.alpha_composite(overlay)
+        drawing.polygon(points, fill=self.color)
 
     def __str__(self: Self) -> str:
         return self.to_svg_polygon(1000,1000)
@@ -164,6 +172,7 @@ class Triangle(Shape):
 class TargetImage(Target["ImageIndividual"]):
     def __init__(self: Self, image: ndarray):
         self.image = image
+        self.rgb_float = image[:, :, :3].astype(np.float32)
 
     # def image_similarity(self: Self, image: ndarray) -> float:
     #     global_score = 0
@@ -178,9 +187,10 @@ class TargetImage(Target["ImageIndividual"]):
     #             global_score += pixel_score ** 4
     #     return global_score / (self.image.shape[0] * self.image.shape[1])
     def image_similarity(self: Self, image: ndarray) -> float:
-        target = self.image[:, :, :3].astype(np.float32)
-        candidate = image[:, :, :3].astype(np.float32)
-        return -float(np.mean(np.square(target - candidate)))
+        difference = image[:, :, :3].astype(np.float32)
+        np.subtract(difference, self.rgb_float, out=difference)
+        np.square(difference, out=difference)
+        return -float(np.mean(difference))
         
 
     def total_score(self: Self, population: Sequence[ImageIndividual]) -> float:
@@ -252,10 +262,11 @@ class ImageIndividual(Individual["ImageIndividual", TargetImage]):
     def render(self: Self) -> ndarray:
         if hash(self) != self.last_hash or self.rendered is None:
             height, width = self.target.image.shape[:2]
-            canvas = pimg.new("RGBA", (width, height), (255, 255, 255, 255))
+            canvas = pimg.new("RGB", (width, height), (255, 255, 255))
+            drawing = ImageDraw.Draw(canvas, "RGBA")
             for shape in self.triangles:
-                shape.draw_on(canvas, width, height)
-            self.rendered = np.asarray(canvas.convert("RGB"))
+                shape.draw_on(drawing, width, height)
+            self.rendered = np.asarray(canvas)
             self.last_hash = hash(self)
         return self.rendered
 
