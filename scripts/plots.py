@@ -9,29 +9,55 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 
 colors = ["lightcoral", "red", "sandybrown", "darkgoldenrod", "yellowgreen", "chartreuse", "deepskyblue", "royalblue", "mediumpurple", "hotpink"]
 
-def bar_graph(output_file, data: Mapping[str, Mapping[str, float | int | List[float]]], xlabel: str, ylabel: str):
+def bar_graph(output_file, data: Mapping[str, Mapping[str, List[float]]], xlabel: str, ylabel: str):
     bar_width = 1 / (len(data) + 2)
     _, ax = plt.subplots(figsize =(20, 8))
-    levels = list(data[list(data.keys())[0]].keys())
+    groups = list(data[list(data.keys())[0]].keys())
 
-    for idx, algo in enumerate(sorted(data)):
-        bars_x = np.arange(len(data[algo])) + bar_width * idx
-        algo_data = [data[algo][level] for level in levels]
-        if isinstance(algo_data[0], List):
-            means = [np.mean(x) for x in algo_data] # type: ignore
-            errors = [np.std(x) for x in algo_data] # type: ignore
-            b = plt.bar(bars_x, means, width=bar_width, color = colors[idx],
-                         edgecolor='grey', label=algo, yerr=errors)
-            plt.bar_label(b, [f'{x:.4f}' for x in means], padding=5, rotation=90)
-        else:
-            b = plt.bar(bars_x, algo_data, color=colors[idx], width = bar_width,
-                    edgecolor ='grey', label=algo)
-            plt.bar_label(b, algo_data, padding=5, rotation=90)
+    for idx, x in enumerate(sorted(data)):
+        bars_x = np.arange(len(data[x])) + bar_width * idx
+        y_data = [data[x][group] for group in groups]
+        # if isinstance(y_data[0], List):
+        means = [np.mean(i) for i in y_data] # type: ignore
+        errors = [np.std(i) for i in y_data] # type: ignore
+        b = plt.bar(bars_x, means, width=bar_width, color = colors[idx],
+                        edgecolor='grey', label=x, yerr=errors)
+        plt.bar_label(b, [f'{i:.4f}' for i in means], padding=5, rotation=90)
+        # else:
+        #     b = plt.bar(bars_x, y_data, color=colors[idx], width = bar_width,
+        #             edgecolor ='grey', label=x)
+        #     plt.bar_label(b, y_data, padding=5, rotation=90)
 
     plt.xlabel(xlabel, fontweight ='bold', fontsize = 15)
     plt.ylabel(ylabel, fontweight ='bold', fontsize = 15)
-    plt.xticks([r + 0.5-bar_width for r in range(len(data[list(data.keys())[0]]))], levels)
-    ax.set_yscale('log')
+    plt.xticks([r + 0.5-bar_width for r in range(len(data[list(data.keys())[0]]))], groups)
+    # ax.set_yscale('log')
+    ax.margins(y=0.2)
+    plt.legend()
+    #plt.show()
+    plt.savefig(output_file)
+
+def box_plot(output_file: Path, data: Mapping[str, Mapping[str, List[float]]], xlabel: str, ylabel: str):
+    bar_width = 1 / (len(data) + 2)
+    _, ax = plt.subplots(figsize =(20, 8))
+    groups = list(data[list(data.keys())[0]].keys())
+    mydata = []
+    for idx, x in enumerate(sorted(data)):
+        y_data = []
+        for group in groups:
+            y_data.extend(data[x][group])
+        # if isinstance(y_data[0], List):
+        mydata.append(y_data)
+        # else:
+        #     b = plt.bar(bars_x, y_data, color=colors[idx], width = bar_width,
+        #             edgecolor ='grey', label=x)
+        #     plt.bar_label(b, y_data, padding=5, rotation=90)
+
+    plt.boxplot(mydata)
+    plt.xlabel(xlabel, fontweight ='bold', fontsize = 15)
+    plt.ylabel(ylabel, fontweight ='bold', fontsize = 15)
+    plt.xticks([r + 0.5-bar_width for r in range(len(data[list(data.keys())[0]]))], groups)
+    # ax.set_yscale('log')
     ax.margins(y=0.2)
     plt.legend()
     #plt.show()
@@ -63,7 +89,7 @@ def main():
     plot_folder.mkdir(parents=True, exist_ok=True)
 
     time_vs_triangles_map = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['triangles'], 'target', 'time')
-    bar_graph(plot_folder / 'time_vs_triangles.png', time_vs_triangles_map, "Tiempo de ejecucion por algoritmo por nivel", "Tiempo")
+    box_plot(plot_folder / 'time_vs_triangles.png', time_vs_triangles_map, "Tiempo de ejecucion por algoritmo por nivel", "Tiempo")
 
     time_vs_population_map = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['population_size'], 'target', 'time')
     bar_graph(plot_folder / 'time_vs_population.png', time_vs_population_map, "Tiempo de ejecucion por algoritmo por nivel", "Tiempo")
