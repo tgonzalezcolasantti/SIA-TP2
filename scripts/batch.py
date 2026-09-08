@@ -70,7 +70,7 @@ def benchmark_cases(
     cases = [
         (f"{tar} {t} --selection {sel} --crossbreed {cr} --mutation {mut} --no-plot "+\
         f"--mutation-probability {p} --survival {surv} --population-size {pop} --seed {s}",
-        f"{tar} {t} {sel[0:2]} {cr[0:2]} {mut[0:2]} {p} {surv[0]} {pop} {s}",
+        f"{Path(tar).name} {t} {sel[0:2]} {cr[0:2]} {mut[0:2]} {p} {surv[0]} {pop} {s}",
         {"target": tar, "triangles": t, "selection": sel, "crossbreed": cr, "mutation": mut,
          "prob": p, "survival": surv, "population_size": pop})
         for tar, t, sel, cr, mut, p, surv, pop, s in product(
@@ -111,11 +111,12 @@ def run_task(params: str, row: Dict[str, str], task: TaskID, progress: Progress,
                         break
                     if "Generation" in line and progress is not None:
                         gen = int(line.split()[1])
-                        progress.update(task, completed=gen)
+                        progress.update(task, completed=gen, refresh=True)
                     elif "Final MSE" in line:
                         row["MSE"] = f"{float(line.split(":")[1]):.4f}"
                         row["time"] = f"{(time.time() - start):.4f}"
                         row["generations"] = str(gen)
+                        progress.remove_task(task)
                         return row
             time.sleep(0.1)
 
@@ -184,7 +185,7 @@ def run_simulations(
             task = taskprogress.add_task(
                 title,
                 start=False,
-                total=1000,
+                total=2000,
                 visible=False,
                 is_task=True,
             )
@@ -226,17 +227,17 @@ def main() -> None:
     )
     parser.add_argument(
         "--triangles",
-        default="5,10,20,50",
+        default="5,10,20",
         help="Comma-separated triangle count values.",
     )
     parser.add_argument(
         "--population-size",
-        default="10,20,50",
+        default="10,20,30",
         help="Comma-separated population size values.",
     )
     parser.add_argument(
         "--seeds",
-        default="0,1,2",
+        default="1234",
         help="Comma-separated seed values. Will run one run per seed per setting combo.",
     )
     parser.add_argument(
@@ -256,7 +257,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--mutation-probabilities",
-        default="0.001,0.01,0.1,0.2,0.4",
+        default="0.01,0.1,0.5",
         help="Comma-separated seed values. Will run one run per seed per setting combo.",
     )
     parser.add_argument(

@@ -94,9 +94,9 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
             if self.best_score >= target_score:
                 break
             self.last_scores.append(int(-self.best_score))
-            if -self.best_score>= mean(self.last_scores) + stdev(self.last_scores) - 1:
-                break
-            print(f"Generation {i} with MSE {-self.best_score:.4f} ({mean(self.last_scores)} {stdev(self.last_scores)})")
+            # if i >= 500 and -self.best_score>= mean(self.last_scores) + stdev(self.last_scores) - 1:
+            #     break
+            print(f"Generation {i} with MSE {-self.best_score:.4f}")
 
             if plot:
                 graph.set_data(self.best_individual.render()) # type: ignore
