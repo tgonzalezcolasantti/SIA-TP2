@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
-colors = ["lightcoral", "red", "sandybrown", "darkgoldenrod", "yellowgreen", "chartreuse", "deepskyblue", "royalblue", "mediumpurple", "hotpink"]
+colors = ["lightcoral", "red", "sandybrown", "darkgoldenrod", "yellowgreen", "lightgreen", "chartreuse", "deepskyblue", "royalblue", "mediumblue", "slateblue", "mediumpurple", "hotpink", "lightpink"]
 
-def bar_graph(output_file, data: Mapping[str, Mapping[str, List[float]]], xlabel: str, ylabel: str, sorter: Optional[Callable[[str], float]] = None):
+def bar_graph(output_file, data: Mapping[str, Mapping[str, List[float]]], xlabel: str, ylabel: str, sorter: Optional[Callable[[str], float]] = None, log: bool = False):
     bar_width = 1 / (len(data) + 2)
     _, ax = plt.subplots(figsize =(20, 8))
     groups = list(data[list(data.keys())[0]].keys())
@@ -31,7 +31,8 @@ def bar_graph(output_file, data: Mapping[str, Mapping[str, List[float]]], xlabel
     plt.xlabel(xlabel, fontweight ='bold', fontsize = 15)
     plt.ylabel(ylabel, fontweight ='bold', fontsize = 15)
     plt.xticks([r + 0.5-bar_width for r in range(len(data[list(data.keys())[0]]))], groups)
-    # ax.set_yscale('log')
+    if log:
+        ax.set_yscale('log')
     ax.margins(y=0.2)
     plt.legend()
     #plt.show()
@@ -107,16 +108,19 @@ def main():
     precision_vs_population_map = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['population_size'], 'triangles', 'MSE')
     bar_graph(plot_folder / 'precision_triangles_vs_population.png', precision_vs_population_map, "MSE final vs poblacion y triangulos", "MSE", lambda x: float(x))
 
-    precision_vs_selection = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['selection'], 'target', 'MSE')
+    precision_vs_selection = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['selection'], 'target', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform', 'survival': 'additive'})
     bar_graph(plot_folder / 'precision_vs_selection.png', precision_vs_selection, "MSE final vs algoritmo de seleccion y target", "MSE")
 
-    precision_vs_crossbreed = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['triangles'], 'crossbreed', 'MSE')
+    precision_vs_selection_survival = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['selection'], 'survival', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform'})
+    bar_graph(plot_folder / 'precision_vs_selection_survival.png', precision_vs_selection_survival, "MSE final vs algoritmo de seleccion y supervivencia", "MSE", log=True)
+
+    precision_vs_crossbreed = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['triangles'], 'crossbreed', 'MSE', {'selection': 'boltzmann', 'mutation': 'uniform', 'prob':'0.01', 'survival': 'additive'})
     bar_graph(plot_folder / 'precision_vs_crossbreed.png', precision_vs_crossbreed, "MSE final vs algoritmo de cruza y triangulos", "MSE", lambda x: float(x))
 
-    precision_vs_mutation = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['mutation', 'prob'], None, 'MSE')
+    precision_vs_mutation = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['mutation', 'prob'], None, 'MSE', {'selection': 'boltzmann', 'crossbreed': 'ring', 'survival': 'additive'})
     box_plot(plot_folder / 'precision_vs_mutation.png', precision_vs_mutation, "MSE final vs algoritmo de mutacion y probabilidad", "MSE")
 
-    precision_vs_survival = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['survival'], 'target', 'MSE')
+    precision_vs_survival = parse_csv(ROOT_DIR / 'results' / 'results.csv', ['survival'], 'target', 'MSE', {'selection': 'boltzmann', 'crossbreed': 'ring', 'mutation': 'uniform', 'prob':'0.01'})
     bar_graph(plot_folder / 'precision_vs_survival.png', precision_vs_survival, "MSE final vs metodo de supervivencia y target", "MSE")
 
     # bar_graph(plot_folder / 'expanded.png', expanded_nodes, "Nodos expandidos por algoritmo por nivel", "Nodos expandidos")
