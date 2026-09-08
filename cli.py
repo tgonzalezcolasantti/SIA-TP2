@@ -1,6 +1,10 @@
 import argparse
 from pathlib import Path
 
+import numpy as np
+from numpy import ndarray
+from PIL import Image as pimg
+
 from gen.cross import BadCross, OnePointCross, RingCross, TwoPointCross, UniformCross
 from gen.genetic import RecombinationType
 from gen.population import MutationType
@@ -14,6 +18,15 @@ from gen.selection import (
     UniversalSelection,
 )
 from img.image import Triangle
+
+TARGET_IMAGE_MAX_SIZE = (128, 128)
+
+
+def load_target_image(path: Path) -> ndarray:
+    with pimg.open(path) as image:
+        target = image.convert("RGB")
+        target.thumbnail(TARGET_IMAGE_MAX_SIZE, pimg.Resampling.LANCZOS)
+        return np.asarray(target)
 
 
 def existing_image(value: str) -> Path:

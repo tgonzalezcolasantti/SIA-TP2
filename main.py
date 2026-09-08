@@ -2,13 +2,13 @@ from pathlib import Path
 import random
 
 from PIL import Image as pimg
-import numpy as np
 
 from cli import (
     create_crossbreed,
     create_mutation,
     create_selection,
     create_survival,
+    load_target_image,
     parse_args,
 )
 from gen.genetic import GeneticAlgorithm
@@ -18,8 +18,7 @@ from img.image import ImageIndividualFactory, TargetImage, Triangle
 def main():
     args = parse_args()
     random.seed(args.seed)
-    with pimg.open(args.image) as image:
-        target = np.array(image.convert("RGB"))
+    target = load_target_image(args.image)
     problem = TargetImage(target)
     algo = GeneticAlgorithm(
         target=problem,
