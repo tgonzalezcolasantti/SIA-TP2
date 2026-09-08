@@ -105,7 +105,7 @@ def main():
     time_vs_population_map = parse_csv(csv_file, ['population_size'], 'target', 'time')
     bar_graph(plot_folder / 'time_vs_population.png', time_vs_population_map, "Tiempo de ejecucion vs tamano de poblacion", "Tiempo")
 
-    precision_vs_population_map = parse_csv(csv_file, ['population_size'], 'triangles', 'MSE')
+    precision_vs_population_map = parse_csv(csv_file, ['population_size'], 'triangles', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform', 'prob': '0.01', 'survival': 'additive'})
     bar_graph(plot_folder / 'precision_triangles_vs_population.png', precision_vs_population_map, "MSE final vs poblacion y triangulos", "MSE", lambda x: float(x))
 
     precision_vs_selection = parse_csv(csv_file, ['selection'], 'target', 'MSE', {'crossbreed': 'ring', 'mutation': 'uniform', 'survival': 'additive'})
