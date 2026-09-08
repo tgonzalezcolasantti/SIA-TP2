@@ -188,7 +188,7 @@ def run_simulations(
                 visible=False,
                 is_task=True,
             )
-            params += f" --output {output / (title + ".png")}"
+            params += f" --output {output / (title.replace(" ", "_") + ".png")}"
             jobs.append(
                 executor.apply_async(
                     run_task, (params, row, task, taskprogress, timeout)
