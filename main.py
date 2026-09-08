@@ -41,8 +41,9 @@ def main():
         plot=not args.no_plot,
     )
     print(f"Final MSE: {-score:.6f}")
-    pimg.fromarray(ans.render()).save("best_result.png")
-    print("Best image saved to best_result.png")
+    if not args.no_plot:
+        pimg.fromarray(ans.render()).save("best_result.png")
+        print("Best image saved to best_result.png")
     for triangle in ans.triangles:
         print(triangle.to_svg_polygon(target.shape[1], target.shape[0]))
 

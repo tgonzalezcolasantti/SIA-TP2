@@ -111,7 +111,6 @@ def run_task(params: str, row: Dict[str, str], task: TaskID, progress: Progress,
                         break
                     if "Generation" in line and progress is not None:
                         gen = int(line.split()[1])
-                        print(f"Updating {gen}")
                         progress.update(task, completed=gen)
                     elif "Final MSE" in line:
                         row["MSE"] = f"{float(line.split(":")[1]):.4f}"

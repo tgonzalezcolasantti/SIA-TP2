@@ -78,7 +78,6 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
         self.best_score = self.best_individual.fitness
 
     def run(self: Self, max_generations: int = 10000, target_score: float = 0.0, plot: bool = True) -> Tuple[IndividualT, float]:
-        graph = None
         if plot:
             plt.ion()
             graph = plt.imshow(self.best_individual.render())
@@ -89,8 +88,8 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
                 break
             self.run_generation()
             print(f"Generation {i} with MSE {-self.best_score:.4f}")
-            if plot and graph is not None:
-                graph.set_data(self.best_individual.render())
+            if plot:
+                graph.set_data(self.best_individual.render()) # type: ignore
                 plt.draw()
                 plt.pause(0.01)
         return (self.best_individual, self.best_score)
