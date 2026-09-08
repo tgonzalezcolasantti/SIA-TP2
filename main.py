@@ -35,10 +35,13 @@ def main():
         recombination_method=create_survival(args.survival),
         mutation_multi_limit=args.mutation_limit,
     )
+    if args.output_frames:
+        Path(args.output_frames).mkdir(parents=True, exist_ok=True)
     ans, score = algo.run(
         max_generations=args.max_generations,
         target_score=-args.target_error,
         plot=not args.no_plot,
+        frames_path = Path(args.output_frames) if args.output_frames else None
     )
     print(f"Final MSE: {-score:.6f}")
     output = Path(args.output)

@@ -1,12 +1,12 @@
 from collections import deque
 from enum import Enum
-from itertools import islice
-from statistics import mean, stdev
+from pathlib import Path
 from typing import Generic, Optional, Self, Tuple
 from matplotlib import pyplot as plt
 from gen.cross import CrossMethod
 from gen.population import IndividualFactoryT, IndividualT, MutationType, TargetT, Population
 from gen.selection import SelectionMethod
+from PIL import Image as pimg
 
 class RecombinationType(Enum):
     ADDITIVE = "Additive"
@@ -81,7 +81,7 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
         self.best_score = self.best_individual.fitness
 
 
-    def run(self: Self, max_generations: int = 10000, target_score: float = 0.0, plot: bool = True) -> Tuple[IndividualT, float]:
+    def run(self: Self, max_generations: int = 10000, target_score: float = 0.0, plot: bool = True, frames_path: Optional[Path] = None) -> Tuple[IndividualT, float]:
         if plot:
             plt.ion()
             graph = plt.imshow(self.best_individual.render())
@@ -102,4 +102,6 @@ class GeneticAlgorithm(Generic[IndividualT, TargetT, IndividualFactoryT]):
                 graph.set_data(self.best_individual.render()) # type: ignore
                 plt.draw()
                 plt.pause(0.01)
+            if frames_path:
+                pimg.fromarray(self.best_individual.render()).save(frames_path / f"{i}.png")
         return (self.best_individual, self.best_score)

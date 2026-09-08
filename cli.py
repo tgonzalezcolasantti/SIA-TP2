@@ -85,6 +85,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--population-size", type=positive_integer, default=20)
     parser.add_argument("--max-generations", type=positive_integer, default=2000)
+    parser.add_argument("--output-frames", type=str)
     parser.add_argument(
         "--target-error",
         type=nonnegative_float,
